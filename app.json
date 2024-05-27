@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "WillItKillMe",
-    "slug": "WillItKillMe",
+    "name": "WillItKillMeApp",
+    "slug": "WillItKillMeApp",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -27,7 +27,8 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      "expo-barcode-scanner"
     ],
     "experiments": {
       "typedRoutes": true
