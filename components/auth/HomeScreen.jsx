@@ -1,28 +1,47 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { Button, Appbar, Text } from 'react-native-paper';
-import { BarCodeScanner } from 'expo-barcode-scanner';
-import Gif from 'react-native-gif';
+import React, { useState, useEffect } from "react";
+import { View, StyleSheet } from "react-native";
+import { Button, Appbar, Text,Card,Chip } from "react-native-paper";
+import { BarCodeScanner } from "expo-barcode-scanner";
+import Gif from "react-native-gif";
 import { router } from "expo-router";
+import axios from "axios";
 
 const HomeScreen = () => {
   const [hasPermission, setHasPermission] = useState(null);
   const [scanned, setScanned] = useState(false);
   const [isScanning, setIsScanning] = useState(false); // State to track if scanning is active
+  const [apiData, setApiData] = useState([]);
+
+  const allergiesList = [
+    { key: "lactose", label: "🥛 Lactose" },
+    { key: "gluten", label: "🍞 Gluten" },
+    { key: "eggs", label: "🥚 Eggs" },
+    { key: "soy", label: "🌱 Soy" },
+    { key: "fish_and_seafood", label: "🐟 Fish and Seafood" },
+  ];
 
   useEffect(() => {
     const getBarCodeScannerPermissions = async () => {
       const { status } = await BarCodeScanner.requestPermissionsAsync();
-      setHasPermission(status === 'granted');
+      setHasPermission(status === "granted");
     };
 
     getBarCodeScannerPermissions();
   }, []);
 
-  const handleBarCodeScanned = ({ type, data }) => {
+  const handleBarCodeScanned = async ({ type, data }) => {
     setScanned(true);
     setIsScanning(false);
-    alert(`Bar code with type ${type} and data ${data} has been scanned!`);
+    console.log(`Bar code with type ${type} and data ${data} has been scanned!`)
+    const response = await axios.get('/checkAllergies/', {
+      params: {
+        barcode: data 
+      }
+    });
+    console.log(response.data)
+    setApiData(response.data);
+    //console.log(response.data);
+    //alert(`Bar code with type ${type} and data ${data} has been scanned!`);
   };
 
   const handleScanButtonPress = () => {
@@ -30,10 +49,14 @@ const HomeScreen = () => {
     setIsScanning(true); // Enable scanning
   };
 
-  const goToProfile=()=>
-  {
-    router.replace('/profile');
-  }
+  const goToProfile = () => {
+    router.replace("/profile");
+  };
+
+  const getAllergyLabel = (key) => {
+    const allergy = allergiesList.find((item) => item.key === key);
+    return allergy ? allergy.label : `⚠️ ${key.replace(/_/g, " ")}`;
+  };
 
   return (
     <View style={styles.container}>
@@ -41,13 +64,9 @@ const HomeScreen = () => {
         <View style={styles.appbarContent}>
           <Text style={styles.title}>Barcode Reader</Text>
         </View>
-        <Appbar.Action
-          icon="account"
-          size={50}
-          onPress={goToProfile}
-        />
+        <Appbar.Action icon="account" size={50} onPress={goToProfile} />
       </Appbar.Header>
-      
+
       {isScanning ? ( // Render barcode scanner only when scanning is active
         <BarCodeScanner
           onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
@@ -55,8 +74,41 @@ const HomeScreen = () => {
         />
       ) : (
         <>
-          <Gif style={styles.gif} source={require('../../assets/imgs/barcode_read.gif')} />
-          <Button mode="contained" onPress={handleScanButtonPress}>Scan</Button>
+          <Gif
+            style={styles.gif}
+            source={require("../../assets/imgs/barcode_read.gif")}
+          />
+          <Button mode="contained" onPress={handleScanButtonPress}>
+            Scan
+          </Button>
+          <>
+            {apiData ? (
+              <Card style={styles.productCard}>
+                {apiData && apiData.product_name ? (
+                  <Text style={styles.productName}>
+                    Product name: {apiData.product_name}
+                  </Text>
+                ) : (
+                  <Text style={styles.noProductName}>
+                    No product available, please scan!
+                  </Text>
+                )}
+                <View style={styles.chipContainer}>
+                  {apiData &&
+                    apiData.allergen_matches &&
+                    apiData.allergen_matches.map((allergy, index) => (
+                      <Chip
+                        key={index}
+                        style={styles.allergyChip}
+                        textStyle={styles.allergyChipText}
+                      >
+                        {getAllergyLabel(allergy)}
+                      </Chip>
+                    ))}
+                </View>
+              </Card>
+            ) : null}
+          </>
         </>
       )}
     </View>
@@ -66,22 +118,47 @@ const HomeScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   appbarContent: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'left',
+    justifyContent: "center",
+    alignItems: "left",
   },
   title: {
     fontSize: 30,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   gif: {
     width: 200,
     height: 200,
-    alignSelf: 'center',
-    marginTop: '20%',
+    alignSelf: "center",
+    marginTop: "20%",
+  },
+  productCard: {
+    padding: 16,
+    margin: 16,
+  },
+  productName: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 8,
+  },
+  noProductName: {
+    fontSize: 16,
+    color: "gray",
+    marginBottom: 8,
+  },
+  chipContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginTop: 8,
+  },
+  allergyChip: {
+    margin: 4,
+  },
+  allergyChipText: {
+    fontSize: 14,
   },
 });
 
