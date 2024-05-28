@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Text, View, StyleSheet, Button } from 'react-native';
+import { View, StyleSheet } from 'react-native';
+import { Button, Appbar, Text } from 'react-native-paper';
 import { BarCodeScanner } from 'expo-barcode-scanner';
+import Gif from 'react-native-gif';
+import { router } from "expo-router";
 
 const HomeScreen = () => {
   const [hasPermission, setHasPermission] = useState(null);
@@ -18,7 +21,7 @@ const HomeScreen = () => {
 
   const handleBarCodeScanned = ({ type, data }) => {
     setScanned(true);
-    setIsScanning(false)
+    setIsScanning(false);
     alert(`Bar code with type ${type} and data ${data} has been scanned!`);
   };
 
@@ -27,17 +30,35 @@ const HomeScreen = () => {
     setIsScanning(true); // Enable scanning
   };
 
+  const goToProfile=()=>
+  {
+    router.replace('/profile');
+  }
+
   return (
     <View style={styles.container}>
+      <Appbar.Header>
+        <View style={styles.appbarContent}>
+          <Text style={styles.title}>Barcode Reader</Text>
+        </View>
+        <Appbar.Action
+          icon="account"
+          size={50}
+          onPress={goToProfile}
+        />
+      </Appbar.Header>
+      
       {isScanning ? ( // Render barcode scanner only when scanning is active
         <BarCodeScanner
           onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
           style={StyleSheet.absoluteFillObject}
         />
       ) : (
-        <Button title="Scan" onPress={handleScanButtonPress} />
+        <>
+          <Gif style={styles.gif} source={require('../../assets/imgs/barcode_read.gif')} />
+          <Button mode="contained" onPress={handleScanButtonPress}>Scan</Button>
+        </>
       )}
-      {scanned && <Button title={'Tap to Scan Again'} onPress={() => setScanned(false)} />}
     </View>
   );
 };
@@ -45,8 +66,22 @@ const HomeScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    flexDirection: 'column',
+    backgroundColor: '#fff',
+  },
+  appbarContent: {
+    flex: 1,
     justifyContent: 'center',
+    alignItems: 'left',
+  },
+  title: {
+    fontSize: 30,
+    fontWeight: 'bold',
+  },
+  gif: {
+    width: 200,
+    height: 200,
+    alignSelf: 'center',
+    marginTop: '20%',
   },
 });
 
