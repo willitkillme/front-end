@@ -1,56 +1,45 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Text, ActivityIndicator } from 'react-native';
-import { Chip, Button } from 'react-native-paper';
-import axios from 'axios';
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  StyleSheet,
+  Text,
+  ActivityIndicator,
+  ScrollView,
+  BackHandler
+} from "react-native";
+import { Chip, Button } from "react-native-paper";
+import axios from "axios";
 import { router } from "expo-router";
-
-const allergiesList = [
-  { key: 'lactose', label: '🥛 Lactose' },
-  { key: 'gluten', label: '🍞 Gluten' },
-  { key: 'eggs', label: '🥚 Eggs' },
-  { key: 'soy', label: '🌱 Soy' },
-  { key: 'fish_and_seafood', label: '🐟 Fish and Seafood' },
-];
+import AllergiesComp from "./AllergiesComp";
 
 const ProfileScreen = () => {
-  const [selectedAllergies, setSelectedAllergies] = useState([]);
-  const [username,setUsername] = useState();
+  const [data, setData] = useState();
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    axios.get('/profile/')
-      .then(response => {
-        const allergyNames = response.data.allergies.map(allergy => allergy.name);
-        setUsername(response.data.username)
-        setSelectedAllergies(allergyNames);
+    axios
+      .get("/profile/")
+      .then((response) => {
+        setData(response.data);
+        console.log(response.data);
         setIsLoading(false);
       })
-      .catch(error => {
-        console.error('Error fetching allergies:', error);
+      .catch((error) => {
         setIsLoading(false);
       });
   }, []);
 
-  const toggleAllergy = (allergyKey) => {
-    setSelectedAllergies((prevSelected) =>
-      prevSelected.includes(allergyKey)
-        ? prevSelected.filter((key) => key !== allergyKey)
-        : [...prevSelected, allergyKey]
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      () => {
+        router.replace("/home");
+        return true; 
+      }
     );
-  };
 
-  const handleSave = () => {
-
-    axios.put('/set_allergies/', { allergies: selectedAllergies })
-      .then(response => {
-        router.replace('/home');
-        console.log('Allergies saved:', response.data);
-      })
-      .catch(error => {
-        console.error('Error saving allergies:', error);
-      });
-  };
-
+    return () => backHandler.remove(); 
+  }, [router]);
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -59,58 +48,63 @@ const ProfileScreen = () => {
     );
   }
 
+
+
+  const goToAddChild = () => {
+    router.replace("/addchild");
+  };
   return (
-    <View style={styles.container}>
-    <Text style={styles.hellotext}>Hello, {username}! </Text>
-      <Text style={styles.title}>Select Your Allergies</Text>
-      <View style={styles.chipContainer}>
-        {allergiesList.map((allergy) => (
-          <Chip
-            key={allergy.key}
-            style={styles.chip}
-            selected={selectedAllergies.includes(allergy.key)}
-            onPress={() => toggleAllergy(allergy.key)}
-          >
-            {allergy.label}
-          </Chip>
-        ))}
+    <>
+      <View style={styles.container}>
+        <Text style={styles.hellotext}>Hello, {data.username}!</Text>
+        <Button
+          mode="contained"
+          style={{ borderRadius: 8, height: 40, width: 80 }}
+          onPress={goToAddChild}
+        >
+          Add
+        </Button>
       </View>
-      <Button mode="contained" onPress={handleSave}>
-        Save
-      </Button>
-    </View>
+      <ScrollView>
+        <AllergiesComp
+          username={data.username}
+          allergies={data.allergies}
+          child={false}
+        />
+
+        {data.children.map((child, index) => (
+          <React.Fragment key={index}>
+            <AllergiesComp
+              username={child.name}
+              allergies={child.allergies}
+              child={true}
+              id={child.id}
+            />
+            
+          </React.Fragment>
+        ))}
+      </ScrollView>
+    </>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 20,
+  },
+
+  loadingContainer: {
     flex: 1,
-    justifyContent: 'flex-start', // Adjusted to 'flex-start'
-    alignItems: 'center',
-    padding: 20,
+    justifyContent: "center",
+    alignItems: "center",
   },
   hellotext: {
     fontSize: 24,
     marginBottom: 10,
   },
-  title: {
-    fontSize: 24,
-    marginBottom: 20,
-  },
-  chipContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-  },
-  chip: {
-    margin: 4,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
 });
-
 
 export default ProfileScreen;

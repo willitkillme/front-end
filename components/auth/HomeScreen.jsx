@@ -1,24 +1,19 @@
 import React, { useState, useEffect } from "react";
-import { View, StyleSheet } from "react-native";
-import { Button, Appbar, Text,Card,Chip } from "react-native-paper";
+import { View, StyleSheet, ScrollView } from "react-native";
+import { Button, Appbar, Text, Card, Chip } from "react-native-paper";
 import { BarCodeScanner } from "expo-barcode-scanner";
 import Gif from "react-native-gif";
 import { router } from "expo-router";
 import axios from "axios";
+import ResultComp from "../ResultComp";
+import NutrientScreen from "./NutrientScreen";
 
 const HomeScreen = () => {
   const [hasPermission, setHasPermission] = useState(null);
   const [scanned, setScanned] = useState(false);
   const [isScanning, setIsScanning] = useState(false); // State to track if scanning is active
   const [apiData, setApiData] = useState([]);
-
-  const allergiesList = [
-    { key: "lactose", label: "🥛 Lactose" },
-    { key: "gluten", label: "🍞 Gluten" },
-    { key: "eggs", label: "🥚 Eggs" },
-    { key: "soy", label: "🌱 Soy" },
-    { key: "fish_and_seafood", label: "🐟 Fish and Seafood" },
-  ];
+  const [showNutrients, setShowNutrients] = useState(false);
 
   useEffect(() => {
     const getBarCodeScannerPermissions = async () => {
@@ -32,15 +27,17 @@ const HomeScreen = () => {
   const handleBarCodeScanned = async ({ type, data }) => {
     setScanned(true);
     setIsScanning(false);
-    console.log(`Bar code with type ${type} and data ${data} has been scanned!`)
-    const response = await axios.get('/checkAllergies/', {
+    console.log(
+      `Bar code with type ${type} and data ${data} has been scanned!`
+    );
+    const response = await axios.get("/checkAllergies/", {
       params: {
-        barcode: data 
-      }
+        barcode: data,
+      },
     });
-    console.log(response.data)
+    console.log(response.data);
     setApiData(response.data);
-    //console.log(response.data);
+    console.log(response.data);
     //alert(`Bar code with type ${type} and data ${data} has been scanned!`);
   };
 
@@ -51,11 +48,6 @@ const HomeScreen = () => {
 
   const goToProfile = () => {
     router.replace("/profile");
-  };
-
-  const getAllergyLabel = (key) => {
-    const allergy = allergiesList.find((item) => item.key === key);
-    return allergy ? allergy.label : `⚠️ ${key.replace(/_/g, " ")}`;
   };
 
   return (
@@ -81,33 +73,60 @@ const HomeScreen = () => {
           <Button mode="contained" onPress={handleScanButtonPress}>
             Scan
           </Button>
+          {apiData && apiData.product_name ? (
+            <>
+              {!showNutrients ? (
+                <Button mode="contained" onPress={() => setShowNutrients(true)}>
+                  Show nutrients
+                </Button>
+              ) : (
+                <Button
+                  mode="contained"
+                  onPress={() => setShowNutrients(false)}
+                >
+                  Show allergy
+                </Button>
+              )}
+            </>
+          ) : null}
+
           <>
-            {apiData ? (
-              <Card style={styles.productCard}>
-                {apiData && apiData.product_name ? (
-                  <Text style={styles.productName}>
-                    Product name: {apiData.product_name}
-                  </Text>
-                ) : (
-                  <Text style={styles.noProductName}>
-                    No product available, please scan!
-                  </Text>
-                )}
-                <View style={styles.chipContainer}>
-                  {apiData &&
-                    apiData.allergen_matches &&
-                    apiData.allergen_matches.map((allergy, index) => (
-                      <Chip
-                        key={index}
-                        style={styles.allergyChip}
-                        textStyle={styles.allergyChipText}
-                      >
-                        {getAllergyLabel(allergy)}
-                      </Chip>
-                    ))}
-                </View>
-              </Card>
-            ) : null}
+            <ScrollView>
+              {apiData ? (
+                <Card style={styles.productCard}>
+                  {apiData && apiData.product_name ? (
+                    <>
+                      <Text style={styles.productName}>
+                        Product name: {apiData.product_name}
+                      </Text>
+
+                      {!showNutrients ? (
+                        <>
+                          <ResultComp
+                            allergen_matches={apiData.allergen_matches}
+                            child={false}
+                          />
+                          {apiData.child_matches.map((child, index) => (
+                            <ResultComp
+                              key={index} // Ensure each component has a unique key
+                              allergen_matches={child.matches}
+                              name={child.child_name} // Corrected from 'matches.child_name'
+                              child={true}
+                            />
+                          ))}
+                        </>
+                      ) : (
+                        <NutrientScreen product_data={apiData.product_data} nutrients={apiData.nutrients} />
+                      )}
+                    </>
+                  ) : (
+                    <Text style={styles.noProductName}>
+                      No product available, please scan!
+                    </Text>
+                  )}
+                </Card>
+              ) : null}
+            </ScrollView>
           </>
         </>
       )}
@@ -133,7 +152,7 @@ const styles = StyleSheet.create({
     width: 200,
     height: 200,
     alignSelf: "center",
-    marginTop: "20%",
+    marginTop: "5%",
   },
   productCard: {
     padding: 16,
@@ -148,17 +167,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "gray",
     marginBottom: 8,
-  },
-  chipContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    marginTop: 8,
-  },
-  allergyChip: {
-    margin: 4,
-  },
-  allergyChipText: {
-    fontSize: 14,
   },
 });
 
