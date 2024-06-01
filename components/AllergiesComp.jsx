@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { View, StyleSheet, Text, ActivityIndicator } from "react-native";
-import { Chip, Button } from "react-native-paper";
+import { View, StyleSheet, Text } from "react-native";
+import { Chip, Button, TextInput } from "react-native-paper";
 import axios from "axios";
-import {router} from "expo-router";
+import { router } from "expo-router";
+
 const allergiesList = [
   { key: "lactose", label: "🥛 Lactose" },
   { key: "gluten", label: "🍞 Gluten" },
@@ -13,11 +14,12 @@ const allergiesList = [
 
 const AllergiesComp = ({ username, allergies, child, id = null }) => {
   const [selectedAllergies, setSelectedAllergies] = useState([]);
+  const [childName, setChildName] = useState(username || "");
 
   useEffect(() => {
     const allergyNames = allergies.map((allergy) => allergy.name);
     setSelectedAllergies(allergyNames);
-  }, []);
+  }, [allergies]);
 
   const toggleAllergy = (allergyKey) => {
     setSelectedAllergies((prevSelected) =>
@@ -28,59 +30,56 @@ const AllergiesComp = ({ username, allergies, child, id = null }) => {
   };
 
   const handleSave = () => {
-    if (!child) {
-      axios
-        .put("/set_allergies/", { allergies: selectedAllergies })
-        .then((response) => {
-          console.log("Allergies saved:", response.data);
-        })
-        .catch((error) => {
-          console.error("Error saving allergies:", error);
-        });
-    } else {
-      axios
-        .put("/children/" + id + "/set_allergies/", {
-          allergies: selectedAllergies,
-        })
-        .then((response) => {
-          console.log("Allergies saved:", response.data);
-        })
-        .catch((error) => {
-          console.error("Error saving allergies:", error);
-        });
-    }
+    const payload = {
+      new_name: childName,
+      allergies: selectedAllergies,
+    };
+
+    const url = child
+      ? `/children/${id}/set_allergies/`
+      : "/set_allergies/";
+
+    axios
+      .put(url, payload)
+      .then((response) => {
+        console.log("Data saved:", response.data);
+      })
+      .catch((error) => {
+        console.error("Error saving data:", error);
+      });
   };
 
   const handleDelete = () => {
     axios
-      .delete("/delete-children/"+id)
+      .delete(`/delete-children/${id}`)
       .then(() => {
         router.replace("/profile");
       })
       .catch((error) => {
         if (error.response) {
-          // The request was made and the server responded with a status code
-          // other than 2xx. Handle server errors here.
           console.error("Server error:", error.response.data);
         } else if (error.request) {
-          // The request was made but no response was received
           console.error("No response from server:", error.request);
         } else {
-          // Something happened in setting up the request that triggered an error
           console.error("Request setup error:", error.message);
         }
       });
   };
-  
 
   return (
     <View style={styles.container}>
-      {!child ? (
+      {child ? (
         <>
-          <Text style={styles.title}>Select Your Allergies</Text>
+          <Text style={styles.title}>Select {childName}'s Allergies</Text>
+          <TextInput
+            label="Child's Name"
+            value={childName}
+            onChangeText={setChildName}
+            style={styles.input}
+          />
         </>
       ) : (
-        <Text style={styles.title}>Select {username}'s Allergies</Text>
+        <Text style={styles.title}>Select Your Allergies</Text>
       )}
       <View style={styles.chipContainer}>
         {allergiesList.map((allergy) => (
@@ -100,29 +99,33 @@ const AllergiesComp = ({ username, allergies, child, id = null }) => {
         <Button mode="contained" onPress={handleSave} style={styles.button}>
           Save
         </Button>
-        {child &&
-
-        <Button
-          mode="contained"
-          onPress={handleDelete}
-          style={[styles.button, { backgroundColor: "red", color: "white" }]}
-        >
-          Delete Child
-        </Button>
-        }
+        {child && (
+          <Button
+            mode="contained"
+            onPress={handleDelete}
+            style={[styles.button, { backgroundColor: "red", color: "white" }]}
+          >
+            Delete Child
+          </Button>
+        )}
       </View>
     </View>
   );
 };
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "flex-start", // Adjusted to 'flex-start'
+    justifyContent: "flex-start",
     alignItems: "center",
     padding: 20,
   },
   title: {
     fontSize: 24,
+    marginBottom: 20,
+  },
+  input: {
+    width: "100%",
     marginBottom: 20,
   },
   chipContainer: {
@@ -133,11 +136,6 @@ const styles = StyleSheet.create({
   chip: {
     margin: 4,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
   buttonContainer: {
     flexDirection: "row",
     justifyContent: "center",
@@ -145,7 +143,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   button: {
-    marginHorizontal: 20, 
+    marginHorizontal: 20,
   },
 });
 

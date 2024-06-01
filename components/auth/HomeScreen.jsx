@@ -11,7 +11,7 @@ import NutrientScreen from "./NutrientScreen";
 const HomeScreen = () => {
   const [hasPermission, setHasPermission] = useState(null);
   const [scanned, setScanned] = useState(false);
-  const [isScanning, setIsScanning] = useState(false); // State to track if scanning is active
+  const [isScanning, setIsScanning] = useState(false); 
   const [apiData, setApiData] = useState([]);
   const [showNutrients, setShowNutrients] = useState(false);
 
@@ -38,12 +38,11 @@ const HomeScreen = () => {
     console.log(response.data);
     setApiData(response.data);
     console.log(response.data);
-    //alert(`Bar code with type ${type} and data ${data} has been scanned!`);
   };
 
   const handleScanButtonPress = () => {
-    setScanned(false); // Reset scanned state
-    setIsScanning(true); // Enable scanning
+    setScanned(false); 
+    setIsScanning(true); 
   };
 
   const goToProfile = () => {
@@ -59,7 +58,7 @@ const HomeScreen = () => {
         <Appbar.Action icon="account" size={50} onPress={goToProfile} />
       </Appbar.Header>
 
-      {isScanning ? ( // Render barcode scanner only when scanning is active
+      {isScanning ? ( 
         <BarCodeScanner
           onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
           style={StyleSheet.absoluteFillObject}
@@ -108,9 +107,9 @@ const HomeScreen = () => {
                           />
                           {apiData.child_matches.map((child, index) => (
                             <ResultComp
-                              key={index} // Ensure each component has a unique key
+                              key={index}
                               allergen_matches={child.matches}
-                              name={child.child_name} // Corrected from 'matches.child_name'
+                              name={child.child_name}
                               child={true}
                             />
                           ))}

@@ -65,7 +65,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    backgroundColor: '#ffffff', // Optional: You can change the background color
+    backgroundColor: '#ffffff',
   },
   title: {
     marginBottom: 20,

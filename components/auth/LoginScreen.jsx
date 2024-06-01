@@ -12,8 +12,8 @@ const LoginScreen = ({ navigation }) => {
     try {
       const response = await axios.post('/token/', { username, password });
       if (response.status === 200) {
-        const token = response.data.access; // Assuming token is returned in response
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`; // Save token to Axios headers
+        const token = response.data.access;
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`; 
         Alert.alert('Success', 'Login successful.');
         router.replace('/home');
       } else {
