@@ -10,7 +10,9 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
    npm install
    ```
 
-2. Start the app
+2. Eddit the API connection in app\(tabs)\index.tsx
+
+3. Start the app
 
    ```bash
     npx expo start
